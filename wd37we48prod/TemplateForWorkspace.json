@@ -1,0 +1,1135 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"workspaceName": {
+			"type": "string",
+			"metadata": "Workspace name",
+			"defaultValue": "wd37we48prod"
+		},
+		"wd37we48prod-WorkspaceDefaultSqlServer_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'wd37we48prod-WorkspaceDefaultSqlServer'",
+			"defaultValue": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=tcp:wd37we48prod.sql.azuresynapse.net,1433;Initial Catalog=@{linkedService().DBName}"
+		},
+		"wd37we48prod-WorkspaceDefaultStorage_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://wd37we48sa.dfs.core.windows.net"
+		}
+	},
+	"variables": {
+		"workspaceId": "[concat('Microsoft.Synapse/workspaces/', parameters('workspaceName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('workspaceName'), '/Pipeline 2')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Notebook1",
+						"type": "SynapseNotebook",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "NB2",
+								"type": "NotebookReference"
+							},
+							"parameters": {
+								"name": {
+									"value": "test",
+									"type": "string"
+								}
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": "we48sparkpool",
+								"type": "BigDataPoolReference"
+							},
+							"conf": {
+								"spark.dynamicAllocation.enabled": null,
+								"spark.dynamicAllocation.minExecutors": null,
+								"spark.dynamicAllocation.maxExecutors": null
+							},
+							"numExecutors": null
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2026-11-22T05:26:01Z"
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/notebooks/NB2')]",
+				"[concat(variables('workspaceId'), '/bigDataPools/we48sparkpool')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/wd37we48prod-WorkspaceDefaultSqlServer')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"parameters": {
+					"DBName": {
+						"type": "String"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlDW",
+				"typeProperties": {
+					"connectionString": "[parameters('wd37we48prod-WorkspaceDefaultSqlServer_connectionString')]"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/wd37we48prod-WorkspaceDefaultStorage')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('wd37we48prod-WorkspaceDefaultStorage_properties_typeProperties_url')]"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/AutoResolveIntegrationRuntime')]",
+			"type": "Microsoft.Synapse/workspaces/integrationRuntimes",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"type": "Managed",
+				"typeProperties": {
+					"computeProperties": {
+						"location": "AutoResolve",
+						"dataFlowProperties": {
+							"computeType": "General",
+							"coreCount": 8,
+							"timeToLive": 0
+						}
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/WorkspaceSystemIdentity')]",
+			"type": "Microsoft.Synapse/workspaces/credentials",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"type": "ManagedIdentity",
+				"typeProperties": {}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/1_serverless_EDA')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "select 'welcome' as msg;\n\n-- access ADLS -- openrowset\n--  creating External data source / format and creating external table \n\n\nselect top 5 * from \nOPENROWSET\n(\n    BULK 'abfss://wd37we48synapselake@wd37we48sa.dfs.core.windows.net/data/custdata/custs_header' ,\n    FORMAT='CSV',\n    HEADER_ROW=TRUE,\n    PARSER_VERSION='2.0'\n) as cust;",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "master",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/1_we48_serverless_explorer')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "\n\nCREATE DATABASE we48_db;\n\n-- Read Data from ADLS Directly \n\n-- option 1 : using Openrowset \n\n-- option 2 : create a exteral Table on top of ADLS\n--             External Data source \n--             External File Format \n\n\n-- OpenRowset - Serverless only , CSV , parquet , DELTA , JSon (csv tricks)  - adhoc , limited , eDA \n\n-- External Table - avilable in both serverless and dedicated -- resusable , security(table access , view )\n-- Data sit as it is  in ADLS (refering the data )\n-- in case of External Table - metadata managed by synapse , Data managed by external sources and system \n-- External Table , when u drop the table only metdata will be dropped , not data \n\n-- serverless - only support External Table \n-- will not support DML\n\n\n\n\n-- CREATE TABLE emp(eid int , ename VARCHAR(50)); -- supported \n\n\nselect top 5 * from \nOPENROWSET\n(\n    BULK 'abfss://wd37we48synapselake@wd37we48sa.dfs.core.windows.net/data/custdata/custs_header',\n    FORMAT = 'CSV',\n    HEADER_ROW=True,\n    PARSER_VERSION='2.0'\n\n\n) as cust;",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "master",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/2_Dedicated_explorer')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "\n\nCREATE SCHEMA Wd37schema;\n\n\n-- managed / Native Table \n\nCREATE Table Wd37schema.emp\n(\nid int ,\nname VARCHAR(50),\nage int\n)\nWITH\n(\n    DISTRIBUTION=ROUND_ROBIN,-- default \n    CLUSTERED COLUMNSTORE INDEX  -- columnar data format \n)\n;\n\n\nINSERT INTO Wd37schema.emp VALUES (100,'raja',22);\nINSERT INTO Wd37schema.emp VALUES (101,'abc',25);\nINSERT INTO Wd37schema.emp VALUES (103,'synapse',15);\nINSERT INTO Wd37schema.emp VALUES (104,'synapse',15);\n\nINSERT INTO Wd37schema.emp VALUES (105,'sql',15);\n\n\nselect * from Wd37schema.emp;\n\n\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "wd37_sql_pool",
+						"poolName": "wd37_sql_pool"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/2_we48_Dedicated_sql_explorer')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "-- Synapse also following 3 namespace naming standard \n\n\n-- Databse.schema.table\n\n\n-- deafult schema -  dbo\n\n\n-- create Schema \n\nCREATE SCHEMA we48schema;\n\nselect * from sys.schemas;\n\n\nselect * from sys.databases;\n\n\n-- managed Table / Native Table \n\n-- Both data and metedata managed by synapse\n-- data stored by synapse \n-- DML suport (insert , update , delete)\n-- drop the table both data and metadta dropped \n\nCREATE TABLE we48schema.emp(eid int , ename VARCHAR(50));\n\n\nINSERT into we48schema.emp VALUES (100,'raja');\nINSERT into we48schema.emp VALUES (101,'krish');\nINSERT into we48schema.emp VALUES (102,'jaya');\n\n\nselect * from we48schema.emp;\n\n\nCREATE TABLE we48schema.bank_txn_RR\n(\n    txnid int,\n    txndate date,\n    custid VARCHAR(50),\n    amt FLOAT,\n    branch VARCHAR(50),\n    region VARCHAR(50)\n)\nWITH\n(\nDISTRIBUTION=ROUND_ROBIN,  -- distruibuite data eventualy across nodes \nHEAP\n);\n\nINSERT INTO we48schema.bank_txn_RR (txnid, txndate, custid, amt, branch, region)\nVALUES \n(1001, '2026-04-01', 'CUST001', 1500.50, 'T. Nagar', 'Chennai');\nINSERT INTO we48schema.bank_txn_RR (txnid, txndate, custid, amt, branch, region)\nVALUES \n(1002, '2026-04-02', 'CUST002', 2750.00, 'Adyar', 'Chennai');\nINSERT INTO we48schema.bank_txn_RR (txnid, txndate, custid, amt, branch, region)\nVALUES \n(1003, '2026-04-02', 'CUST003', 500.25, 'Jayanagar', 'Bangalore');\nINSERT INTO we48schema.bank_txn_RR (txnid, txndate, custid, amt, branch, region)\nVALUES \n(1004, '2026-04-03', 'CUST001', 3200.00, 'T. Nagar', 'Chennai');\nINSERT INTO we48schema.bank_txn_RR (txnid, txndate, custid, amt, branch, region)\nVALUES \n(1005, '2026-04-05', 'CUST004', 120.00, 'Hitech City', 'Hyderabad');\n\n\nselect * from we48schema.bank_txn_RR;\n\n\n\nCREATE TABLE we48schema.bank_txn_RR\n(\n    txnid int,\n    txndate date,\n    custid VARCHAR(50),\n    amt FLOAT,\n    branch VARCHAR(50),\n    region VARCHAR(50)\n)\nWITH\n(\nDISTRIBUTION=ROUND_ROBIN,  -- distruibuite data eventualy across nodes \nHEAP\n);\n\n\n\n\nCREATE TABLE we48schema.bank_txn_hash\n(\n    txnid int,\n    txndate date,\n    custid VARCHAR(50),\n    amt FLOAT,\n    branch VARCHAR(50),\n    region VARCHAR(50)\n)\nWITH\n(\nDISTRIBUTION=HASH(region),  -- distruibuite data based on region \nCLUSTERED COLUMNSTORE INDEX -- columnar data format - like parquet \n);\n\n\n\n\n\nCREATE TABLE we48schema.bank_txn_rpl\n(\n    txnid int,\n    txndate date,\n    custid VARCHAR(50),\n    amt FLOAT,\n    branch VARCHAR(50),\n    region VARCHAR(50)\n)\nWITH\n(\nDISTRIBUTION=REPLICATE,  -- small table for join and lookup (broadcast spark option)\nCLUSTERED COLUMNSTORE INDEX -- columnar data format - like parquet \n);\n\n\n\n\n\n\n\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "we48_sql_con",
+						"poolName": "we48_sql_con"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/3_stored_procedure')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "ALTER  PROCEDURE Wd37schema.sp_get_emp\nAS\nBEGIN\nDECLARE @r_cnt int=0;\n\nPRINT 'Process started...'\n\nPRINT 'step 1 : getting the count'\nselect @r_cnt=count(1) from  Wd37schema.emp;\n\nPRINT 'step 2 : Total Employess :'+ CAST(@r_cnt as VARCHAR(10));\n\nPRINT ' Step 3 : printing all employee ...';\n\nselect * from Wd37schema.emp;\n\nPRINT 'Process completed...'\n\nEND",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "wd37_sql_pool",
+						"poolName": "wd37_sql_pool"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/3_we48_copy_sql')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "\n\nCREATE TABLE we48schema.cust\n(\n    custid int,\n    fname VARCHAR(50),\n    lname VARCHAR(50),\n    age int,\n    prof VARCHAR(50)\n)\nWITH\n(\n    CLUSTERED COLUMNSTORE INDEX,\n    DISTRIBUTION=ROUND_ROBIN\n);\n\n\n\nCOPY INTO we48schema.cust FROM\n'https://wd37we48sa.blob.core.windows.net/wd37we48synapselake/data/custdata/custs'\nWITH\n(\nFILE_TYPE='CSV',\nFIRSTROW=1\n\n);\n\n\n\nselect top 5 * from we48schema.cust;\n\n\n\n-- view ( contains query )\n-- virtual table \n-- only query no data \n\n-- security / limit / restrict \n-- always latest \n\nCREATE view we48schema.vw_test\nas \nselect * from we48schema.cust;\n\n-- access \n\n\nselect top 5 * from  we48schema.vw_test;\n\n\n-- Materilized View \n\n-- like a view , but it will contain data as well \n\n-- incremental / auto refresh data when the underlying table got changed\n-- performance \n\nCREATE MATERIALIZED view we48schema.mv_prof_agg\nWITH (DISTRIBUTION =HASH(prof))\nas\nselect prof ,count(1) as total from we48schema.cust GROUP BY prof;\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "we48_sql_con",
+						"poolName": "we48_sql_con"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/4_we48_stored_procdure')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "-- Stored procedure \n-- database object \n-- precompiled block of sql statements\n-- resuability\n-- business logic with looping and conditional construct \n-- paaremeters\n-- Error handling\n-- block of statements - begin/end , indentation , {}\n\nAlter PROCEDURE we48schema.sp_cust\nAS\nBEGIN\n\nPRINT 'Showing top 10 customer data '\nselect top 10 * from we48schema.cust \nPRINT 'completd.....................!' \nEnd\n\n-- run the procedure\nEXEC we48schema.sp_cust\n\n\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "we48_sql_con",
+						"poolName": "we48_sql_con"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/5_we48_sp_etl_txn')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "\n\nCREATE TABLE we48schema.stg_retail_txns\n(\n    txnid INT,\n    txndate VARCHAR(20),\n    custid INT,\n    amt FLOAT,\n    category VARCHAR(100),\n    product VARCHAR(200),\n    city VARCHAR(100),\n    state VARCHAR(100),\n    payment_mode VARCHAR(20)\n) WITH\n(\n    DISTRIBUTION=ROUND_ROBIN,\n    HEAP\n)\n;\n\n\nCREATE TABLE we48schema.retail_txns\n(\n    txnid INT,\n    txndate DATE,\n    custid INT,\n    amt FLOAT,\n    category VARCHAR(100),\n    product VARCHAR(200),\n    city VARCHAR(100),\n    state VARCHAR(100),\n    payment_mode VARCHAR(20)\n) WITH\n(\n    DISTRIBUTION=HASH(city),\n    CLUSTERED COLUMNSTORE INDEX\n)\n;\n\n\nAlter  PROCEDURE we48schema.sp_etl_txns\n    @processType VARCHAR(50)\n\nAS\nBEGIN\n\nDECLARE @rowcount int;\n\nselect @rowcount=count(*) from we48schema.stg_retail_txns\n\nif @rowcount=0\nBEGIN\nPRINT 'no record in the staging table '\nEnd\nELSE\nBEGIN\nPRINT 'loading '+cast(@rowcount as varchar(10))+' data into main table '\n\nif @processType='INSERT'\nBEGIN\n\nINSERT INTO we48schema.retail_txns\nselect \n    txnid,\n    Try_CONVERT(DATE,txndate,110), -- MM-DD-YYYY\n    custid,\n    amt,category,\n    product,city,state,payment_mode\nfrom we48schema.stg_retail_txns;\n\nTRUNCATE TABLE we48schema.stg_retail_txns;\n\nPRINT 'Insert completed ... ' + cast(@rowcount as varchar(10));\n\nEND\nELSE\nbegin\n\nDELETE from we48schema.retail_txns;\n\nINSERT INTO we48schema.retail_txns\nselect \n    txnid,\n    Try_CONVERT(DATE,txndate,110), -- MM-DD-YYYY\n    custid,\n    amt,category,\n    product,city,state,payment_mode\nfrom we48schema.stg_retail_txns;\n\nTRUNCATE TABLE we48schema.stg_retail_txns;\n\nPRINT 'Reload completed ....'\nend \n\nEnd\n\n\n\nend\n\n\n\n\n\n\n\nexec  we48schema.sp_etl_txns  @processType ='INSERT'\n\nINSERT INTO we48schema.stg_retail_txns\nVALUES (1, '06-26-2025', 4007024, 40.33, 'Exercise & Fitness', 'Cardio Machine Accessories', 'Clarksville', 'Tennessee', 'cash');\nINSERT INTO we48schema.stg_retail_txns\nVALUES (2, '05-26-2025', 4006742, 198.44, 'Exercise & Fitness', 'Weightlifting Gloves', 'Long Beach', 'California', 'credit');\n\nexec  we48schema.sp_etl_txns  @processType ='INSERT'\n\nselect * from we48schema.retail_txns;\n\nselect * from we48schema.stg_retail_txns;\n\n\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "we48_sql_con",
+						"poolName": "we48_sql_con"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SQL script 1')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "EXEC Wd37schema.sp_get_emp",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "wd37_sql_pool",
+						"poolName": "wd37_sql_pool"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SQL script 2')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "create schema we48sch;\n\nCREATE table we48_sql_pool.we48sch.emp(eid int,ename VARCHAR(50),age int);\n\ninsert into we48sch.emp values(100,'raja',23);\n\ninsert into we48sch.emp values(101,'krish',23);\ninsert into we48sch.emp values(102,'abs',33);\n\nselect * from we48sch.emp;",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "we48_sql_pool",
+						"poolName": "we48_sql_pool"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/script11')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "select 11",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "master",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/1_we48_spark_NB')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "we48sparkpool",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "28g",
+					"driverCores": 4,
+					"executorMemory": "28g",
+					"executorCores": 4,
+					"numExecutors": 2,
+					"runAsWorkspaceSystemIdentity": false,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.minExecutors": "2",
+						"spark.dynamicAllocation.maxExecutors": "2",
+						"spark.autotune.trackingId": "2a24108f-db26-4073-86bc-c35fff0a7173"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"synapse_widget": {
+						"version": "0.1"
+					},
+					"enableDebugMode": false,
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "/subscriptions/ca44b188-72b2-4b7d-988e-1dd0b2ea4773/resourceGroups/Rgwd37we48/providers/Microsoft.Synapse/workspaces/wd37we48prod/bigDataPools/we48sparkpool",
+						"name": "we48sparkpool",
+						"type": "Spark",
+						"endpoint": "https://wd37we48prod.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/we48sparkpool",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net",
+							"authHeader": null
+						},
+						"sparkVersion": "3.5",
+						"nodeCount": 3,
+						"cores": 4,
+						"memory": 28,
+						"extraHeader": null
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Synapse Spark Application\n",
+							"- spark version \n",
+							"- spark session\n",
+							"\n",
+							"\n",
+							"### Magic commands \n",
+							"\n",
+							"%%sql - sql\n",
+							"%%spark- scala cell\n",
+							"%%pyspark - pyspark cell\n",
+							""
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"print(spark)\n",
+							"print(spark.version)"
+						],
+						"outputs": [],
+						"execution_count": 2
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							""
+						],
+						"outputs": []
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"microsoft": {
+								"language": "sparksql"
+							},
+							"jupyter": {
+								"outputs_hidden": false
+							},
+							"collapsed": false
+						},
+						"source": [
+							"%%sql\n",
+							"select 'welcome to synapse spark' as msg"
+						],
+						"outputs": [],
+						"execution_count": 7
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Read Data from ADLS and Write into ADLS - pysprk"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"# abfss://container@SA.dfs.core.net/dir/file\n",
+							"sorce_path=\"abfss://wd37we48synapselake@wd37we48sa.dfs.core.windows.net/data/custdata/custs_header\"\n",
+							"cust_df=spark.read.csv(sorce_path,header=True,inferSchema=True)\n",
+							"\n",
+							"cust_df.printSchema()\n",
+							"cust_df.show(5)"
+						],
+						"outputs": [],
+						"execution_count": 9
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"from pyspark.sql.functions import count\n",
+							"\n",
+							"agg_df=cust_df.groupBy(\"profession\").agg(count(\"*\").alias(\"totoal_count\"))\n",
+							"\n",
+							"final_df=agg_df.filter(\"totoal_count>220\")\n",
+							"\n",
+							"final_df.show()"
+						],
+						"outputs": [],
+						"execution_count": 13
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"final_df.write.mode(\"overwrite\").json(\"abfss://wd37we48synapselake@wd37we48sa.dfs.core.windows.net/data/custwe48json\")\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": 14
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Read and Write Synapse sql table using spark"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"import com.microsoft.spark.sqlanalytics\n",
+							"\n",
+							"\n",
+							"emp_df=spark.read.synapsesql(\"we48_sql_pool.we48sch.emp\")\n",
+							"\n",
+							"emp_df.show()"
+						],
+						"outputs": [],
+						"execution_count": 19
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"final_df.write.saveAsTable(\"test\")"
+						],
+						"outputs": [],
+						"execution_count": 20
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"spark.sql(\"show tables\").show()"
+						],
+						"outputs": [],
+						"execution_count": 21
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"spark.read.table(\"test\").show()"
+						],
+						"outputs": [],
+						"execution_count": 22
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## mssparkutil (dbutil in databricks)"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"mssparkutils.help()"
+						],
+						"outputs": [],
+						"execution_count": 23
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"mssparkutils.fs.help()"
+						],
+						"outputs": [],
+						"execution_count": 24
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"mssparkutils.fs.ls(\"abfss://wd37we48synapselake@wd37we48sa.dfs.core.windows.net/data/custwe48json\")"
+						],
+						"outputs": [],
+						"execution_count": 26
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"mssparkutils.fs.head(\"abfss://wd37we48synapselake@wd37we48sa.dfs.core.windows.net/data/custwe48json/part-00000-abc24b2c-4b6c-47a7-adf2-5103c3605837-c000.json\")"
+						],
+						"outputs": [],
+						"execution_count": 27
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"outputs_hidden": true
+							}
+						},
+						"source": [
+							"mssparkutils.notebook.help()"
+						],
+						"outputs": [],
+						"execution_count": 29
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Run a Notebook "
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"mssparkutils.notebook.run(\"NB2\",90,{\"name\":\"we48user\"})"
+						],
+						"outputs": [],
+						"execution_count": 32
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/NB1')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "we48sparkpool",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "28g",
+					"driverCores": 4,
+					"executorMemory": "28g",
+					"executorCores": 4,
+					"numExecutors": 2,
+					"runAsWorkspaceSystemIdentity": false,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.minExecutors": "2",
+						"spark.dynamicAllocation.maxExecutors": "2",
+						"spark.autotune.trackingId": "5e0c840d-d3bd-431f-8194-acd73d1437dd"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "/subscriptions/ca44b188-72b2-4b7d-988e-1dd0b2ea4773/resourceGroups/Rgwd37we48/providers/Microsoft.Synapse/workspaces/wd37we48prod/bigDataPools/we48sparkpool",
+						"name": "we48sparkpool",
+						"type": "Spark",
+						"endpoint": "https://wd37we48prod.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/we48sparkpool",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net",
+							"authHeader": null
+						},
+						"sparkVersion": "3.5",
+						"nodeCount": 3,
+						"cores": 4,
+						"memory": 28,
+						"extraHeader": null
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"source": [
+							"print(\"welcome\")"
+						],
+						"outputs": []
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/NB2')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "we48sparkpool",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "28g",
+					"driverCores": 4,
+					"executorMemory": "28g",
+					"executorCores": 4,
+					"numExecutors": 2,
+					"runAsWorkspaceSystemIdentity": false,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.minExecutors": "2",
+						"spark.dynamicAllocation.maxExecutors": "2",
+						"spark.autotune.trackingId": "fbba4cd7-5acd-4ee5-bff2-0248e934b1c2"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"synapse_widget": {
+						"version": "0.1"
+					},
+					"enableDebugMode": false,
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "/subscriptions/ca44b188-72b2-4b7d-988e-1dd0b2ea4773/resourceGroups/Rgwd37we48/providers/Microsoft.Synapse/workspaces/wd37we48prod/bigDataPools/we48sparkpool",
+						"name": "we48sparkpool",
+						"type": "Spark",
+						"endpoint": "https://wd37we48prod.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/we48sparkpool",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net",
+							"authHeader": null
+						},
+						"sparkVersion": "3.5",
+						"nodeCount": 3,
+						"cores": 4,
+						"memory": 28,
+						"extraHeader": null
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"metadata": {
+							"tags": [
+								"parameters"
+							]
+						},
+						"source": [
+							"name=\"izuser\""
+						],
+						"outputs": []
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"print(\"hello welcome\"+name)"
+						],
+						"outputs": []
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Wd37_synapse_spark_explorer')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "we48sparkpool",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "28g",
+					"driverCores": 4,
+					"executorMemory": "28g",
+					"executorCores": 4,
+					"numExecutors": 2,
+					"runAsWorkspaceSystemIdentity": false,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.minExecutors": "2",
+						"spark.dynamicAllocation.maxExecutors": "2",
+						"spark.autotune.trackingId": "37298239-5570-448b-89ab-6e818d6c022b"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"synapse_widget": {
+						"version": "0.1"
+					},
+					"enableDebugMode": false,
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "/subscriptions/ca44b188-72b2-4b7d-988e-1dd0b2ea4773/resourceGroups/Rgwd37we48/providers/Microsoft.Synapse/workspaces/wd37we48prod/bigDataPools/we48sparkpool",
+						"name": "we48sparkpool",
+						"type": "Spark",
+						"endpoint": "https://wd37we48prod.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/we48sparkpool",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net",
+							"authHeader": null
+						},
+						"sparkVersion": "3.5",
+						"nodeCount": 3,
+						"cores": 4,
+						"memory": 28,
+						"extraHeader": null
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Synapse NoteBook Features\n",
+							"## sub header\n",
+							"\n",
+							"### List\n",
+							"- option1\n",
+							"- option2\n",
+							"    - sub option\n",
+							"\n",
+							"\n",
+							"1. spark"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"print(spark)"
+						],
+						"outputs": [],
+						"execution_count": 1
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Magic Commands\n",
+							"\n",
+							"- %% pyspark\n",
+							"- %% spark\n",
+							"- %%sql\n",
+							"- %% md"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"microsoft": {
+								"language": "sparksql"
+							},
+							"collapsed": false
+						},
+						"source": [
+							"%%sql\n",
+							"select 'welcome' as msg"
+						],
+						"outputs": [],
+						"execution_count": 3
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"microsoft": {
+								"language": "scala"
+							}
+						},
+						"source": [
+							"%%spark\n",
+							"val msg=\"welcome\"\n",
+							"\n",
+							"println(msg)"
+						],
+						"outputs": [],
+						"execution_count": 5
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## call another Notebook with parameter"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"mssparkutils.notebook.help()"
+						],
+						"outputs": [],
+						"execution_count": 9
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"mssparkutils.notebook.run(\"child_NB\",90,{\"name\":\"wd37 user\",\"session_name\":\"Azure Synapse\"})"
+						],
+						"outputs": [],
+						"execution_count": 13
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/child_NB')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "we48sparkpool",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "28g",
+					"driverCores": 4,
+					"executorMemory": "28g",
+					"executorCores": 4,
+					"numExecutors": 2,
+					"runAsWorkspaceSystemIdentity": false,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.minExecutors": "2",
+						"spark.dynamicAllocation.maxExecutors": "2",
+						"spark.autotune.trackingId": "5c685210-6d81-4065-935f-a15e03252d3c"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"synapse_widget": {
+						"version": "0.1"
+					},
+					"enableDebugMode": false,
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "/subscriptions/ca44b188-72b2-4b7d-988e-1dd0b2ea4773/resourceGroups/Rgwd37we48/providers/Microsoft.Synapse/workspaces/wd37we48prod/bigDataPools/we48sparkpool",
+						"name": "we48sparkpool",
+						"type": "Spark",
+						"endpoint": "https://wd37we48prod.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/we48sparkpool",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net",
+							"authHeader": null
+						},
+						"sparkVersion": "3.5",
+						"nodeCount": 3,
+						"cores": 4,
+						"memory": 28,
+						"extraHeader": null
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"metadata": {
+							"tags": [
+								"parameters"
+							]
+						},
+						"source": [
+							"name=\"iz user\"\n",
+							"\n",
+							"session_name=\"azure\""
+						],
+						"outputs": [],
+						"execution_count": 6
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"print(\"*\"*50)\n",
+							"print(f\"welccome ... {name}\")\n",
+							"\n",
+							"print(f\"currently we are learning {session_name}\")\n",
+							"print(\"*\"*50)"
+						],
+						"outputs": [],
+						"execution_count": 7
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/nb_git')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "we48sparkpool",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "28g",
+					"driverCores": 4,
+					"executorMemory": "28g",
+					"executorCores": 4,
+					"numExecutors": 2,
+					"runAsWorkspaceSystemIdentity": false,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.minExecutors": "2",
+						"spark.dynamicAllocation.maxExecutors": "2",
+						"spark.autotune.trackingId": "61ca52e5-fca9-40d5-afdd-31bca3ec4eab"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "/subscriptions/ca44b188-72b2-4b7d-988e-1dd0b2ea4773/resourceGroups/Rgwd37we48/providers/Microsoft.Synapse/workspaces/wd37we48prod/bigDataPools/we48sparkpool",
+						"name": "we48sparkpool",
+						"type": "Spark",
+						"endpoint": "https://wd37we48prod.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/we48sparkpool",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net",
+							"authHeader": null
+						},
+						"sparkVersion": "3.5",
+						"nodeCount": 3,
+						"cores": 4,
+						"memory": 28,
+						"extraHeader": null
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"source": [
+							"print(\"welcome to git\")"
+						],
+						"outputs": []
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/we48sparkpool')]",
+			"type": "Microsoft.Synapse/workspaces/bigDataPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"autoPause": {
+					"enabled": true,
+					"delayInMinutes": 15
+				},
+				"autoScale": {
+					"enabled": false,
+					"maxNodeCount": 10,
+					"minNodeCount": 3
+				},
+				"nodeCount": 3,
+				"nodeSize": "Small",
+				"nodeSizeFamily": "MemoryOptimized",
+				"sparkVersion": "3.5",
+				"isComputeIsolationEnabled": false,
+				"sessionLevelPackagesEnabled": false,
+				"annotations": []
+			},
+			"dependsOn": [],
+			"location": "centralus"
+		}
+	]
+}
