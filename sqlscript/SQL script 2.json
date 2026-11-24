@@ -1,0 +1,17 @@
+{
+	"name": "SQL script 2",
+	"properties": {
+		"content": {
+			"query": "create schema we48sch;\n\nCREATE table we48_sql_pool.we48sch.emp(eid int,ename VARCHAR(50),age int);\n\ninsert into we48sch.emp values(100,'raja',23);\n\ninsert into we48sch.emp values(101,'krish',23);\ninsert into we48sch.emp values(102,'abs',33);\n\nselect * from we48sch.emp;",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "we48_sql_pool",
+				"poolName": "we48_sql_pool"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

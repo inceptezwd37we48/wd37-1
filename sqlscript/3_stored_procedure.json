@@ -1,0 +1,17 @@
+{
+	"name": "3_stored_procedure",
+	"properties": {
+		"content": {
+			"query": "ALTER  PROCEDURE Wd37schema.sp_get_emp\nAS\nBEGIN\nDECLARE @r_cnt int=0;\n\nPRINT 'Process started...'\n\nPRINT 'step 1 : getting the count'\nselect @r_cnt=count(1) from  Wd37schema.emp;\n\nPRINT 'step 2 : Total Employess :'+ CAST(@r_cnt as VARCHAR(10));\n\nPRINT ' Step 3 : printing all employee ...';\n\nselect * from Wd37schema.emp;\n\nPRINT 'Process completed...'\n\nEND",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "wd37_sql_pool",
+				"poolName": "wd37_sql_pool"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

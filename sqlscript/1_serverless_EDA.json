@@ -1,0 +1,17 @@
+{
+	"name": "1_serverless_EDA",
+	"properties": {
+		"content": {
+			"query": "select 'welcome' as msg;\n\n-- access ADLS -- openrowset\n--  creating External data source / format and creating external table \n\n\nselect top 5 * from \nOPENROWSET\n(\n    BULK 'abfss://wd37we48synapselake@wd37we48sa.dfs.core.windows.net/data/custdata/custs_header' ,\n    FORMAT='CSV',\n    HEADER_ROW=TRUE,\n    PARSER_VERSION='2.0'\n) as cust;",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "master",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

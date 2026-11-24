@@ -1,0 +1,17 @@
+{
+	"name": "2_Dedicated_explorer",
+	"properties": {
+		"content": {
+			"query": "\n\nCREATE SCHEMA Wd37schema;\n\n\n-- managed / Native Table \n\nCREATE Table Wd37schema.emp\n(\nid int ,\nname VARCHAR(50),\nage int\n)\nWITH\n(\n    DISTRIBUTION=ROUND_ROBIN,-- default \n    CLUSTERED COLUMNSTORE INDEX  -- columnar data format \n)\n;\n\n\nINSERT INTO Wd37schema.emp VALUES (100,'raja',22);\nINSERT INTO Wd37schema.emp VALUES (101,'abc',25);\nINSERT INTO Wd37schema.emp VALUES (103,'synapse',15);\nINSERT INTO Wd37schema.emp VALUES (104,'synapse',15);\n\nINSERT INTO Wd37schema.emp VALUES (105,'sql',15);\n\n\nselect * from Wd37schema.emp;\n\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "wd37_sql_pool",
+				"poolName": "wd37_sql_pool"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

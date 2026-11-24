@@ -1,0 +1,17 @@
+{
+	"name": "3_we48_copy_sql",
+	"properties": {
+		"content": {
+			"query": "\n\nCREATE TABLE we48schema.cust\n(\n    custid int,\n    fname VARCHAR(50),\n    lname VARCHAR(50),\n    age int,\n    prof VARCHAR(50)\n)\nWITH\n(\n    CLUSTERED COLUMNSTORE INDEX,\n    DISTRIBUTION=ROUND_ROBIN\n);\n\n\n\nCOPY INTO we48schema.cust FROM\n'https://wd37we48sa.blob.core.windows.net/wd37we48synapselake/data/custdata/custs'\nWITH\n(\nFILE_TYPE='CSV',\nFIRSTROW=1\n\n);\n\n\n\nselect top 5 * from we48schema.cust;\n\n\n\n-- view ( contains query )\n-- virtual table \n-- only query no data \n\n-- security / limit / restrict \n-- always latest \n\nCREATE view we48schema.vw_test\nas \nselect * from we48schema.cust;\n\n-- access \n\n\nselect top 5 * from  we48schema.vw_test;\n\n\n-- Materilized View \n\n-- like a view , but it will contain data as well \n\n-- incremental / auto refresh data when the underlying table got changed\n-- performance \n\nCREATE MATERIALIZED view we48schema.mv_prof_agg\nWITH (DISTRIBUTION =HASH(prof))\nas\nselect prof ,count(1) as total from we48schema.cust GROUP BY prof;\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "we48_sql_con",
+				"poolName": "we48_sql_con"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

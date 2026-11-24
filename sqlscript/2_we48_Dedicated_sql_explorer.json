@@ -1,0 +1,17 @@
+{
+	"name": "2_we48_Dedicated_sql_explorer",
+	"properties": {
+		"content": {
+			"query": "-- Synapse also following 3 namespace naming standard \n\n\n-- Databse.schema.table\n\n\n-- deafult schema -  dbo\n\n\n-- create Schema \n\nCREATE SCHEMA we48schema;\n\nselect * from sys.schemas;\n\n\nselect * from sys.databases;\n\n\n-- managed Table / Native Table \n\n-- Both data and metedata managed by synapse\n-- data stored by synapse \n-- DML suport (insert , update , delete)\n-- drop the table both data and metadta dropped \n\nCREATE TABLE we48schema.emp(eid int , ename VARCHAR(50));\n\n\nINSERT into we48schema.emp VALUES (100,'raja');\nINSERT into we48schema.emp VALUES (101,'krish');\nINSERT into we48schema.emp VALUES (102,'jaya');\n\n\nselect * from we48schema.emp;\n\n\nCREATE TABLE we48schema.bank_txn_RR\n(\n    txnid int,\n    txndate date,\n    custid VARCHAR(50),\n    amt FLOAT,\n    branch VARCHAR(50),\n    region VARCHAR(50)\n)\nWITH\n(\nDISTRIBUTION=ROUND_ROBIN,  -- distruibuite data eventualy across nodes \nHEAP\n);\n\nINSERT INTO we48schema.bank_txn_RR (txnid, txndate, custid, amt, branch, region)\nVALUES \n(1001, '2026-04-01', 'CUST001', 1500.50, 'T. Nagar', 'Chennai');\nINSERT INTO we48schema.bank_txn_RR (txnid, txndate, custid, amt, branch, region)\nVALUES \n(1002, '2026-04-02', 'CUST002', 2750.00, 'Adyar', 'Chennai');\nINSERT INTO we48schema.bank_txn_RR (txnid, txndate, custid, amt, branch, region)\nVALUES \n(1003, '2026-04-02', 'CUST003', 500.25, 'Jayanagar', 'Bangalore');\nINSERT INTO we48schema.bank_txn_RR (txnid, txndate, custid, amt, branch, region)\nVALUES \n(1004, '2026-04-03', 'CUST001', 3200.00, 'T. Nagar', 'Chennai');\nINSERT INTO we48schema.bank_txn_RR (txnid, txndate, custid, amt, branch, region)\nVALUES \n(1005, '2026-04-05', 'CUST004', 120.00, 'Hitech City', 'Hyderabad');\n\n\nselect * from we48schema.bank_txn_RR;\n\n\n\nCREATE TABLE we48schema.bank_txn_RR\n(\n    txnid int,\n    txndate date,\n    custid VARCHAR(50),\n    amt FLOAT,\n    branch VARCHAR(50),\n    region VARCHAR(50)\n)\nWITH\n(\nDISTRIBUTION=ROUND_ROBIN,  -- distruibuite data eventualy across nodes \nHEAP\n);\n\n\n\n\nCREATE TABLE we48schema.bank_txn_hash\n(\n    txnid int,\n    txndate date,\n    custid VARCHAR(50),\n    amt FLOAT,\n    branch VARCHAR(50),\n    region VARCHAR(50)\n)\nWITH\n(\nDISTRIBUTION=HASH(region),  -- distruibuite data based on region \nCLUSTERED COLUMNSTORE INDEX -- columnar data format - like parquet \n);\n\n\n\n\n\nCREATE TABLE we48schema.bank_txn_rpl\n(\n    txnid int,\n    txndate date,\n    custid VARCHAR(50),\n    amt FLOAT,\n    branch VARCHAR(50),\n    region VARCHAR(50)\n)\nWITH\n(\nDISTRIBUTION=REPLICATE,  -- small table for join and lookup (broadcast spark option)\nCLUSTERED COLUMNSTORE INDEX -- columnar data format - like parquet \n);\n\n\n\n\n\n\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "we48_sql_con",
+				"poolName": "we48_sql_con"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

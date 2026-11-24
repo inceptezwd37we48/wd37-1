@@ -1,0 +1,157 @@
+{
+	"name": "Wd37_synapse_spark_explorer",
+	"properties": {
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "we48sparkpool",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"runAsWorkspaceSystemIdentity": false,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "37298239-5570-448b-89ab-6e818d6c022b"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"synapse_widget": {
+				"version": "0.1"
+			},
+			"enableDebugMode": false,
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/ca44b188-72b2-4b7d-988e-1dd0b2ea4773/resourceGroups/Rgwd37we48/providers/Microsoft.Synapse/workspaces/wd37we48prod/bigDataPools/we48sparkpool",
+				"name": "we48sparkpool",
+				"type": "Spark",
+				"endpoint": "https://wd37we48prod.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/we48sparkpool",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net",
+					"authHeader": null
+				},
+				"sparkVersion": "3.5",
+				"nodeCount": 3,
+				"cores": 4,
+				"memory": 28,
+				"extraHeader": null
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Synapse NoteBook Features\n",
+					"## sub header\n",
+					"\n",
+					"### List\n",
+					"- option1\n",
+					"- option2\n",
+					"    - sub option\n",
+					"\n",
+					"\n",
+					"1. spark"
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"print(spark)"
+				],
+				"execution_count": 1
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Magic Commands\n",
+					"\n",
+					"- %% pyspark\n",
+					"- %% spark\n",
+					"- %%sql\n",
+					"- %% md"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"microsoft": {
+						"language": "sparksql"
+					},
+					"collapsed": false
+				},
+				"source": [
+					"%%sql\n",
+					"select 'welcome' as msg"
+				],
+				"execution_count": 3
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"microsoft": {
+						"language": "scala"
+					}
+				},
+				"source": [
+					"%%spark\n",
+					"val msg=\"welcome\"\n",
+					"\n",
+					"println(msg)"
+				],
+				"execution_count": 5
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## call another Notebook with parameter"
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"mssparkutils.notebook.help()"
+				],
+				"execution_count": 9
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"mssparkutils.notebook.run(\"child_NB\",90,{\"name\":\"wd37 user\",\"session_name\":\"Azure Synapse\"})"
+				],
+				"execution_count": 13
+			}
+		]
+	}
+}

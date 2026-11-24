@@ -1,0 +1,17 @@
+{
+	"name": "4_we48_stored_procdure",
+	"properties": {
+		"content": {
+			"query": "-- Stored procedure \n-- database object \n-- precompiled block of sql statements\n-- resuability\n-- business logic with looping and conditional construct \n-- paaremeters\n-- Error handling\n-- block of statements - begin/end , indentation , {}\n\nAlter PROCEDURE we48schema.sp_cust\nAS\nBEGIN\n\nPRINT 'Showing top 10 customer data '\nselect top 10 * from we48schema.cust \nPRINT 'completd.....................!' \nEnd\n\n-- run the procedure\nEXEC we48schema.sp_cust\n\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "we48_sql_con",
+				"poolName": "we48_sql_con"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

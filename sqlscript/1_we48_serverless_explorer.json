@@ -1,0 +1,17 @@
+{
+	"name": "1_we48_serverless_explorer",
+	"properties": {
+		"content": {
+			"query": "\n\nCREATE DATABASE we48_db;\n\n-- Read Data from ADLS Directly \n\n-- option 1 : using Openrowset \n\n-- option 2 : create a exteral Table on top of ADLS\n--             External Data source \n--             External File Format \n\n\n-- OpenRowset - Serverless only , CSV , parquet , DELTA , JSon (csv tricks)  - adhoc , limited , eDA \n\n-- External Table - avilable in both serverless and dedicated -- resusable , security(table access , view )\n-- Data sit as it is  in ADLS (refering the data )\n-- in case of External Table - metadata managed by synapse , Data managed by external sources and system \n-- External Table , when u drop the table only metdata will be dropped , not data \n\n-- serverless - only support External Table \n-- will not support DML\n\n\n\n\n-- CREATE TABLE emp(eid int , ename VARCHAR(50)); -- supported \n\n\nselect top 5 * from \nOPENROWSET\n(\n    BULK 'abfss://wd37we48synapselake@wd37we48sa.dfs.core.windows.net/data/custdata/custs_header',\n    FORMAT = 'CSV',\n    HEADER_ROW=True,\n    PARSER_VERSION='2.0'\n\n\n) as cust;",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "master",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

@@ -1,0 +1,79 @@
+{
+	"name": "child_NB",
+	"properties": {
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "we48sparkpool",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"runAsWorkspaceSystemIdentity": false,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "5c685210-6d81-4065-935f-a15e03252d3c"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"synapse_widget": {
+				"version": "0.1"
+			},
+			"enableDebugMode": false,
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/ca44b188-72b2-4b7d-988e-1dd0b2ea4773/resourceGroups/Rgwd37we48/providers/Microsoft.Synapse/workspaces/wd37we48prod/bigDataPools/we48sparkpool",
+				"name": "we48sparkpool",
+				"type": "Spark",
+				"endpoint": "https://wd37we48prod.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/we48sparkpool",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net",
+					"authHeader": null
+				},
+				"sparkVersion": "3.5",
+				"nodeCount": 3,
+				"cores": 4,
+				"memory": 28,
+				"extraHeader": null
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "code",
+				"metadata": {
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"name=\"iz user\"\n",
+					"\n",
+					"session_name=\"azure\""
+				],
+				"execution_count": 6
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"print(\"*\"*50)\n",
+					"print(f\"welccome ... {name}\")\n",
+					"\n",
+					"print(f\"currently we are learning {session_name}\")\n",
+					"print(\"*\"*50)"
+				],
+				"execution_count": 7
+			}
+		]
+	}
+}

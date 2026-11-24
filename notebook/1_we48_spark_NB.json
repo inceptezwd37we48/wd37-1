@@ -1,0 +1,273 @@
+{
+	"name": "1_we48_spark_NB",
+	"properties": {
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "we48sparkpool",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"runAsWorkspaceSystemIdentity": false,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "2a24108f-db26-4073-86bc-c35fff0a7173"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"synapse_widget": {
+				"version": "0.1"
+			},
+			"enableDebugMode": false,
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/ca44b188-72b2-4b7d-988e-1dd0b2ea4773/resourceGroups/Rgwd37we48/providers/Microsoft.Synapse/workspaces/wd37we48prod/bigDataPools/we48sparkpool",
+				"name": "we48sparkpool",
+				"type": "Spark",
+				"endpoint": "https://wd37we48prod.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/we48sparkpool",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net",
+					"authHeader": null
+				},
+				"sparkVersion": "3.5",
+				"nodeCount": 3,
+				"cores": 4,
+				"memory": 28,
+				"extraHeader": null
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Synapse Spark Application\n",
+					"- spark version \n",
+					"- spark session\n",
+					"\n",
+					"\n",
+					"### Magic commands \n",
+					"\n",
+					"%%sql - sql\n",
+					"%%spark- scala cell\n",
+					"%%pyspark - pyspark cell\n",
+					""
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"print(spark)\n",
+					"print(spark.version)"
+				],
+				"execution_count": 2
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					""
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"microsoft": {
+						"language": "sparksql"
+					},
+					"jupyter": {
+						"outputs_hidden": false
+					},
+					"collapsed": false
+				},
+				"source": [
+					"%%sql\n",
+					"select 'welcome to synapse spark' as msg"
+				],
+				"execution_count": 7
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Read Data from ADLS and Write into ADLS - pysprk"
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"# abfss://container@SA.dfs.core.net/dir/file\n",
+					"sorce_path=\"abfss://wd37we48synapselake@wd37we48sa.dfs.core.windows.net/data/custdata/custs_header\"\n",
+					"cust_df=spark.read.csv(sorce_path,header=True,inferSchema=True)\n",
+					"\n",
+					"cust_df.printSchema()\n",
+					"cust_df.show(5)"
+				],
+				"execution_count": 9
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"from pyspark.sql.functions import count\n",
+					"\n",
+					"agg_df=cust_df.groupBy(\"profession\").agg(count(\"*\").alias(\"totoal_count\"))\n",
+					"\n",
+					"final_df=agg_df.filter(\"totoal_count>220\")\n",
+					"\n",
+					"final_df.show()"
+				],
+				"execution_count": 13
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"final_df.write.mode(\"overwrite\").json(\"abfss://wd37we48synapselake@wd37we48sa.dfs.core.windows.net/data/custwe48json\")\n",
+					""
+				],
+				"execution_count": 14
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Read and Write Synapse sql table using spark"
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"import com.microsoft.spark.sqlanalytics\n",
+					"\n",
+					"\n",
+					"emp_df=spark.read.synapsesql(\"we48_sql_pool.we48sch.emp\")\n",
+					"\n",
+					"emp_df.show()"
+				],
+				"execution_count": 19
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"final_df.write.saveAsTable(\"test\")"
+				],
+				"execution_count": 20
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"spark.sql(\"show tables\").show()"
+				],
+				"execution_count": 21
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"spark.read.table(\"test\").show()"
+				],
+				"execution_count": 22
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## mssparkutil (dbutil in databricks)"
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"mssparkutils.help()"
+				],
+				"execution_count": 23
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"mssparkutils.fs.help()"
+				],
+				"execution_count": 24
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"mssparkutils.fs.ls(\"abfss://wd37we48synapselake@wd37we48sa.dfs.core.windows.net/data/custwe48json\")"
+				],
+				"execution_count": 26
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"mssparkutils.fs.head(\"abfss://wd37we48synapselake@wd37we48sa.dfs.core.windows.net/data/custwe48json/part-00000-abc24b2c-4b6c-47a7-adf2-5103c3605837-c000.json\")"
+				],
+				"execution_count": 27
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"outputs_hidden": true
+					}
+				},
+				"source": [
+					"mssparkutils.notebook.help()"
+				],
+				"execution_count": 29
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Run a Notebook "
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"mssparkutils.notebook.run(\"NB2\",90,{\"name\":\"we48user\"})"
+				],
+				"execution_count": 32
+			}
+		]
+	}
+}

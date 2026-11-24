@@ -1,0 +1,17 @@
+{
+	"name": "5_we48_sp_etl_txn",
+	"properties": {
+		"content": {
+			"query": "\n\nCREATE TABLE we48schema.stg_retail_txns\n(\n    txnid INT,\n    txndate VARCHAR(20),\n    custid INT,\n    amt FLOAT,\n    category VARCHAR(100),\n    product VARCHAR(200),\n    city VARCHAR(100),\n    state VARCHAR(100),\n    payment_mode VARCHAR(20)\n) WITH\n(\n    DISTRIBUTION=ROUND_ROBIN,\n    HEAP\n)\n;\n\n\nCREATE TABLE we48schema.retail_txns\n(\n    txnid INT,\n    txndate DATE,\n    custid INT,\n    amt FLOAT,\n    category VARCHAR(100),\n    product VARCHAR(200),\n    city VARCHAR(100),\n    state VARCHAR(100),\n    payment_mode VARCHAR(20)\n) WITH\n(\n    DISTRIBUTION=HASH(city),\n    CLUSTERED COLUMNSTORE INDEX\n)\n;\n\n\nAlter  PROCEDURE we48schema.sp_etl_txns\n    @processType VARCHAR(50)\n\nAS\nBEGIN\n\nDECLARE @rowcount int;\n\nselect @rowcount=count(*) from we48schema.stg_retail_txns\n\nif @rowcount=0\nBEGIN\nPRINT 'no record in the staging table '\nEnd\nELSE\nBEGIN\nPRINT 'loading '+cast(@rowcount as varchar(10))+' data into main table '\n\nif @processType='INSERT'\nBEGIN\n\nINSERT INTO we48schema.retail_txns\nselect \n    txnid,\n    Try_CONVERT(DATE,txndate,110), -- MM-DD-YYYY\n    custid,\n    amt,category,\n    product,city,state,payment_mode\nfrom we48schema.stg_retail_txns;\n\nTRUNCATE TABLE we48schema.stg_retail_txns;\n\nPRINT 'Insert completed ... ' + cast(@rowcount as varchar(10));\n\nEND\nELSE\nbegin\n\nDELETE from we48schema.retail_txns;\n\nINSERT INTO we48schema.retail_txns\nselect \n    txnid,\n    Try_CONVERT(DATE,txndate,110), -- MM-DD-YYYY\n    custid,\n    amt,category,\n    product,city,state,payment_mode\nfrom we48schema.stg_retail_txns;\n\nTRUNCATE TABLE we48schema.stg_retail_txns;\n\nPRINT 'Reload completed ....'\nend \n\nEnd\n\n\n\nend\n\n\n\n\n\n\n\nexec  we48schema.sp_etl_txns  @processType ='INSERT'\n\nINSERT INTO we48schema.stg_retail_txns\nVALUES (1, '06-26-2025', 4007024, 40.33, 'Exercise & Fitness', 'Cardio Machine Accessories', 'Clarksville', 'Tennessee', 'cash');\nINSERT INTO we48schema.stg_retail_txns\nVALUES (2, '05-26-2025', 4006742, 198.44, 'Exercise & Fitness', 'Weightlifting Gloves', 'Long Beach', 'California', 'credit');\n\nexec  we48schema.sp_etl_txns  @processType ='INSERT'\n\nselect * from we48schema.retail_txns;\n\nselect * from we48schema.stg_retail_txns;\n\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "we48_sql_con",
+				"poolName": "we48_sql_con"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}
