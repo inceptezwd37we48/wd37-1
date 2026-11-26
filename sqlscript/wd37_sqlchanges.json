@@ -1,0 +1,17 @@
+{
+	"name": "wd37_sqlchanges",
+	"properties": {
+		"content": {
+			"query": "\nselect 'welcome to git ' as welcome_msg;\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "master",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}
